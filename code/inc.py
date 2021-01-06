@@ -19,7 +19,7 @@ def benchmark(file):
             try:
                 return func(*args, **kwargs)
             finally:
-                with open(file, "w+") as f:
+                with open(file, "a+") as f:
                     f.write(
                         f"{func.__name__}_start,{kwargs['fp']},{start},{getpid()}\n"
                     )
@@ -31,23 +31,38 @@ def benchmark(file):
 
 
 @benchmark(file=b_file)
-def reads3(fp, anon):
+def reads3(fp, anon, cache):
+
     fs = s3fs.S3FileSystem(anon=anon)
-    with fs.open(fp, "rb") as f:
-        im = gzip.open(f).read()
+    if cache is True:
+        cache_options = {"cache_storage": "/dev/shm"}
+
+        with fs.open(fp, "rb", cache_options=cache_options) as f:
+            im = gzip.open(f).read()
+
+    else:
+        with fs.open(fp, "rb") as f:
+            im = gzip.open(f).read()
+
     return im
 
 
 @benchmark(file=b_file)
-def writes3(fp, data):
+def writes3(fp, data, cache):
     fs = s3fs.S3FileSystem()
-    with fs.open(fp, "wb") as f:
-        f.write(data)
+
+    if cache is True:
+        cache_options = {"cache_storage": "/dev/shm"}
+        with fs.open(fp, "wb", cache_options=cache_options) as f:
+            f.write(data)
+    else:
+        with fs.open(fp, "wb") as f:
+            f.write(data)
 
 
 @benchmark(file=b_file)
-def read(fp, anon=False):
-    fh = nib.FileHolder(fileobj=BytesIO(reads3(fp=fp, anon=anon)))
+def read(fp, anon=False, cache=False):
+    fh = nib.FileHolder(fileobj=BytesIO(reads3(fp=fp, anon=anon, cache=cache)))
     im = nib.Nifti1Image.from_file_map({"header": fh, "image": fh})
     return im
 
@@ -59,7 +74,7 @@ def increment(im, fp):
 
 
 @benchmark(file=b_file)
-def write(im, fp, bucket, i):
+def write(im, fp, bucket, i, cache=False):
 
     bio = BytesIO()
     file_map = im.make_file_map({"image": bio, "header": bio})
@@ -71,13 +86,20 @@ def write(im, fp, bucket, i):
     else:
         out_fp = op.join(bucket, f"inc_{i}_{'_'.join(op.basename(fp).split('_')[2:])}")
 
-    writes3(fp=out_fp, data=data)
+    writes3(fp=out_fp, data=data, cache=cache)
     return out_fp
 
+
 @click.command()
-@click.option('--it', type=int, default=1, help="Number of iterations")
-@click.option('--cache', default=False, help="enable file caching")
+@click.option("--it", type=int, default=1, help="Number of iterations")
+@click.option("--cache", is_flag=True, help="enable file caching")
 def main(it, cache):
+
+    # TODO: Move to helper file
+    # create new benchmark file
+    with open(b_file, "w+") as f:
+        f.write("action,file,time,pid\n")
+
     fs = s3fs.S3FileSystem(anon=True)
     all_f = fs.glob("openneuro.org/ds000113/sub-*/ses-forrestgump/dwi/*dwi.nii.gz")
 
@@ -87,10 +109,11 @@ def main(it, cache):
 
         anon = True if i == 0 else False
 
-        im = read(fp=fp, anon=anon)
+        im = read(fp=fp, anon=anon, cache=cache)
         inc = increment(im=im, fp=fp)
-        fp = write(im=inc, fp=fp, bucket="vhs-testbucket", i=i)
+        fp = write(im=inc, fp=fp, bucket="vhs-testbucket", i=i, cache=cache)
     print(fp)
+
 
 if __name__ == "__main__":
     main()
