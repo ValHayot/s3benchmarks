@@ -16,13 +16,13 @@ def reads3(fp, anon, cache, **kwargs):
         cache_options = {"cache_storage": "/dev/shm"}
 
         with fs.open(fp, "rb", cache_options=cache_options) as f:
-            im = gzip.open(f).read()
+            data = f.read()
 
     else:
         with fs.open(fp, "rb") as f:
-            im = gzip.open(f).read()
+            data = f.read()
 
-    return im
+    return data
 
 
 @benchmark
@@ -41,7 +41,7 @@ def writes3(out_fp, data, cache, **kwargs):
 @benchmark
 def read(fp, anon=False, cache=False, **kwargs):
     fh = nib.FileHolder(
-        fileobj=BytesIO(reads3(fp=fp, anon=anon, cache=cache, **kwargs))
+        fileobj=BytesIO(gzip.decompress(reads3(fp=fp, anon=anon, cache=cache, **kwargs)))
     )
     im = nib.Nifti1Image.from_file_map({"header": fh, "image": fh})
     return im
@@ -54,12 +54,12 @@ def increment(im, fp, **kwargs):
 
 
 @benchmark
-def write(im, fp, bucket, i, cache=False, **kwargs):
+def write(im, fp, bucket, i, cache=False, clevel=9, **kwargs):
 
     bio = BytesIO()
     file_map = im.make_file_map({"image": bio, "header": bio})
     im.to_file_map(file_map)
-    data = gzip.compress(bio.getvalue())
+    data = gzip.compress(bio.getvalue(), compresslevel=clevel)
 
     if i == 0:
         out_fp = op.join(bucket, f"inc_{i}_{op.basename(fp)}")
@@ -76,16 +76,15 @@ def write(im, fp, bucket, i, cache=False, **kwargs):
 @click.option("--it", type=int, default=1, help="Number of iterations")
 @click.option("--cache", is_flag=True, help="enable file caching")
 @click.option("--n_files", type=int, default=1, help="Number of files to process")
+@click.option("--compression_level", type=click.Choice(range(0,10)), default=6, help="Compression level")
 @click.option(
     "--bench_file",
     type=str,
     help="file to output benchmark results to. STDOUT otherwise",
 )
-def main(input_bucket_rgx, output_bucket, it, cache, n_files, bench_file):
+def main(input_bucket_rgx, output_bucket, it, cache, n_files, compression_level, bench_file):
 
-    # TODO: Move to helper file
     # create new benchmark file
-
     setup_bench(bench_file)
 
     fs = s3fs.S3FileSystem(anon=True)
@@ -106,6 +105,7 @@ def main(input_bucket_rgx, output_bucket, it, cache, n_files, bench_file):
                 bucket="vhs-testbucket",
                 i=i,
                 cache=cache,
+                clevel=compression_level,
                 bfile=benchmark,
             )
 
