@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import inspect
+import subprocess as sp
 from os import getpid
 from time import time_ns
 from functools import wraps
@@ -32,7 +33,7 @@ def benchmark(func):
                         f"{func.__name__}_start,{kwargs['fp']},{start},{getpid()},\n"
                     )
                     f.write(
-                        f"{func.__name__}_end,{kwargs['fp']},{end},{getpid()},{end-start}\n"
+                        f"{func.__name__}_end,{kwargs['fp']},{end},{getpid()},{(end-start)*10**-9}\n"
                     )
             except Exception as e:
                 out_string = f"""
@@ -42,3 +43,13 @@ def benchmark(func):
                 print(inspect.cleandoc(out_string))
 
     return _benchmark
+
+
+def drop_caches():
+    print("** DROPPING CACHES **")
+    out = sp.run("echo 3 | sudo tee /proc/sys/vm/drop_caches", capture_output=True, shell=True)
+    print("STDOUT: ", out.stdout.decode("UTF-8"), end="")
+    print("STDERR: ", out.stderr.decode("UTF-8"))
+    print("** DROPPING CACHES COMPLETED **")
+
+
