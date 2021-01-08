@@ -3,35 +3,13 @@ import gzip
 import click
 import nibabel as nib
 import numpy as np
+from helpers import benchmark, setup_bench
 from io import BytesIO
-from functools import wraps
-from time import time
-from os import path as op, getpid
-
-b_file = "benchmark-singlefile.txt"
-
-# decorator
-def benchmark(file):
-    def param_bench(func):
-        @wraps(func)
-        def _benchmark(*args, **kwargs):
-            start = time()
-            try:
-                return func(*args, **kwargs)
-            finally:
-                with open(file, "a+") as f:
-                    f.write(
-                        f"{func.__name__}_start,{kwargs['fp']},{start},{getpid()}\n"
-                    )
-                    f.write(f"{func.__name__}_end,{kwargs['fp']},{time()},{getpid()}\n")
-
-        return _benchmark
-
-    return param_bench
+from os import path as op
 
 
-@benchmark(file=b_file)
-def reads3(fp, anon, cache):
+@benchmark
+def reads3(fp, anon, cache, **kwargs):
 
     fs = s3fs.S3FileSystem(anon=anon)
     if cache is True:
@@ -47,34 +25,36 @@ def reads3(fp, anon, cache):
     return im
 
 
-@benchmark(file=b_file)
-def writes3(fp, data, cache):
+@benchmark
+def writes3(out_fp, data, cache, **kwargs):
     fs = s3fs.S3FileSystem()
 
     if cache is True:
         cache_options = {"cache_storage": "/dev/shm"}
-        with fs.open(fp, "wb", cache_options=cache_options) as f:
+        with fs.open(out_fp, "wb", cache_options=cache_options) as f:
             f.write(data)
     else:
-        with fs.open(fp, "wb") as f:
+        with fs.open(out_fp, "wb") as f:
             f.write(data)
 
 
-@benchmark(file=b_file)
-def read(fp, anon=False, cache=False):
-    fh = nib.FileHolder(fileobj=BytesIO(reads3(fp=fp, anon=anon, cache=cache)))
+@benchmark
+def read(fp, anon=False, cache=False, **kwargs):
+    fh = nib.FileHolder(
+        fileobj=BytesIO(reads3(fp=fp, anon=anon, cache=cache, **kwargs))
+    )
     im = nib.Nifti1Image.from_file_map({"header": fh, "image": fh})
     return im
 
 
-@benchmark(file=b_file)
-def increment(im, fp):
+@benchmark
+def increment(im, fp, **kwargs):
     data = np.asanyarray(im.dataobj) + 1
     return nib.Nifti1Image(data, im.affine, im.header)
 
 
-@benchmark(file=b_file)
-def write(im, fp, bucket, i, cache=False):
+@benchmark
+def write(im, fp, bucket, i, cache=False, **kwargs):
 
     bio = BytesIO()
     file_map = im.make_file_map({"image": bio, "header": bio})
@@ -86,33 +66,51 @@ def write(im, fp, bucket, i, cache=False):
     else:
         out_fp = op.join(bucket, f"inc_{i}_{'_'.join(op.basename(fp).split('_')[2:])}")
 
-    writes3(fp=out_fp, data=data, cache=cache)
+    writes3(out_fp, data=data, cache=cache, fp=fp, **kwargs)
     return out_fp
 
 
 @click.command()
+@click.argument("input_bucket_rgx", type=str)
+@click.argument("output_bucket", type=str)
 @click.option("--it", type=int, default=1, help="Number of iterations")
 @click.option("--cache", is_flag=True, help="enable file caching")
-def main(it, cache):
+@click.option("--n_files", type=int, default=1, help="Number of files to process")
+@click.option(
+    "--bench_file",
+    type=str,
+    help="file to output benchmark results to. STDOUT otherwise",
+)
+def main(input_bucket_rgx, output_bucket, it, cache, n_files, bench_file):
 
     # TODO: Move to helper file
     # create new benchmark file
-    with open(b_file, "w+") as f:
-        f.write("action,file,time,pid\n")
+
+    setup_bench(bench_file)
 
     fs = s3fs.S3FileSystem(anon=True)
-    all_f = fs.glob("openneuro.org/ds000113/sub-*/ses-forrestgump/dwi/*dwi.nii.gz")
+    all_f = fs.glob(input_bucket_rgx)
 
-    fp = all_f[1]
+    files = all_f[:n_files]
+    outfiles = []
 
-    for i in range(it):
+    for fp in files:
+        for i in range(it):
+            anon = True if i == 0 else False
 
-        anon = True if i == 0 else False
+            im = read(fp=fp, anon=anon, cache=cache, bfile=bench_file)
+            inc = increment(im=im, fp=fp, bfile=bench_file)
+            fp = write(
+                im=inc,
+                fp=fp,
+                bucket="vhs-testbucket",
+                i=i,
+                cache=cache,
+                bfile=benchmark,
+            )
 
-        im = read(fp=fp, anon=anon, cache=cache)
-        inc = increment(im=im, fp=fp)
-        fp = write(im=inc, fp=fp, bucket="vhs-testbucket", i=i, cache=cache)
-    print(fp)
+        outfiles.append(fp)
+    print(outfiles)
 
 
 if __name__ == "__main__":
