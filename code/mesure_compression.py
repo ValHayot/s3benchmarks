@@ -5,8 +5,8 @@ import numpy
 import hashlib
 import pathlib
 import nibabel as nib
-from helpers import setup_bench, benchmark
-from os import path as op, utime
+from helpers import setup_bench, benchmark, drop_caches
+from os import path as op, utime, remove
 
 
 @benchmark
@@ -61,12 +61,16 @@ def main(filename, repetitions, benchmark_file, compression_level):
     mtime = pathlib.Path(filename).stat().st_mtime
 
     for i in range(repetitions):
+        drop_caches()
         data = read_file(filename, bfile=benchmark_file)
         gz_fn = write_file(
             filename, data, bfile=benchmark_file, mtime=mtime, clevel=compression_level
         )
 
-        print(gz_fn)
+        print("Compressed output file: ", gz_fn)
+
+        # Cleanup
+        remove(gz_fn)
 
 
 if __name__ == "__main__":
