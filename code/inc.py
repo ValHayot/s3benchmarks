@@ -8,6 +8,7 @@ import numpy as np
 from code.helpers import benchmark, setup_bench
 from io import BytesIO
 from os import path as op
+from time import time_ns
 
 
 @benchmark
@@ -103,8 +104,13 @@ def main(
     use_dask,
 ):
 
+    # potentially create another decorate or fix the benchmark one for this
+    start = time_ns()
     # create new benchmark file
     setup_bench(bench_file)
+
+    makespan_dir = op.dirname(bench_file)
+    bench_name = op.basename(bench_file)
 
     fs = s3fs.S3FileSystem(anon=True)
     all_f = fs.glob(input_bucket_rgx)
@@ -148,6 +154,11 @@ def main(
         outfiles = dask.delayed(lambda x: x)(outfiles).compute()
 
     print(", ".join(outfiles))
+
+    end = time_ns()
+
+    with open(op.join(makespan_dir, "makespan.csv"), "a+") as f:
+        f.write(f"{bench_name},{start},{end},{(end-start)*10**-9}\n")
 
 
 if __name__ == "__main__":

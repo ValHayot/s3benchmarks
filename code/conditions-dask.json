@@ -4,9 +4,9 @@
         {
             "in_bucket_rgx": "openneuro.org/ds000113/sub-*/ses-forrestgump/dwi/*dwi.nii.gz",
             "iterations": [1, 5, 10],
-            "n_files": [1],
+            "n_files": [1, 5, 10],
             "cache": [true, false],
-            "dask": [true, false]
+            "dask": [true]
         }
     ]
 }
