@@ -5,21 +5,21 @@ import numpy
 import hashlib
 import pathlib
 import nibabel as nib
-from helpers import setup_bench, benchmark, drop_caches
+from code.helpers import setup_bench, benchmark, drop_caches
 from os import path as op, utime, remove
 
 
 @benchmark
-def compress(data, fp, bfile, mtime, clevel):
+def compress(data, mtime, clevel=9, **kwargs):
     return gzip.compress(data, mtime=mtime, compresslevel=clevel)
 
 
 @benchmark
-def decompress(gz_data, fp, bfile):
+def decompress(gz_data, **kwargs):
     return gzip.decompress(gz_data)
 
 
-def write_file(fp, data, bfile, mtime, clevel):
+def write_file(fp, data, mtime, clevel=9, bfile=None):
     fp = op.join(op.dirname(fp), f"rgzip-{op.basename(fp)}")
 
     gz_data = compress(data, fp=fp, bfile=bfile, mtime=mtime, clevel=clevel)
@@ -31,7 +31,7 @@ def write_file(fp, data, bfile, mtime, clevel):
     return fp
 
 
-def read_file(fp, bfile):
+def read_file(fp, bfile=None):
     with open(fp, "rb") as f:
         gz_data = f.read()
         data = decompress(gz_data, fp=fp, bfile=bfile)

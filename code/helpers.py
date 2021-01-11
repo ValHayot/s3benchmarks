@@ -23,6 +23,10 @@ def benchmark(func):
     @wraps(func)
     def _benchmark(*args, **kwargs):
         start = time_ns()
+
+        if "fp" not in kwargs:
+            kwargs["fp"] = ""
+
         try:
             return func(*args, **kwargs)
         finally:
