@@ -1,10 +1,11 @@
 # /usr/bin/env python
+import dask
 import s3fs
 import gzip
 import click
 import nibabel as nib
 import numpy as np
-from helpers import benchmark, setup_bench
+from code.helpers import benchmark, setup_bench
 from io import BytesIO
 from os import path as op
 
@@ -90,8 +91,9 @@ def write(im, fp, bucket, i, cache=False, clevel=9, **kwargs):
     type=str,
     help="file to output benchmark results to. STDOUT otherwise",
 )
+@click.option("--use_dask", is_flag=True, help="run as a dask pipeline")
 def main(
-    input_bucket_rgx, output_bucket, it, cache, n_files, compression_level, bench_file
+    input_bucket_rgx, output_bucket, it, cache, n_files, compression_level, bench_file, use_dask
 ):
 
     # create new benchmark file
@@ -108,19 +110,36 @@ def main(
         for i in range(it):
             anon = True if i == 0 else False
 
-            im = read(fp=fp, anon=anon, cache=cache, bfile=bench_file)
-            inc = increment(im=im, fp=fp, bfile=bench_file)
-            fp = write(
-                im=inc,
-                fp=fp,
-                bucket="vhs-testbucket",
-                i=i,
-                cache=cache,
-                clevel=clevel,
-                bfile=bench_file,
-            )
+            if use_dask is True:
+                im = dask.delayed(read)(fp=fp, anon=anon, cache=cache, bfile=bench_file)
+                inc = dask.delayed(increment)(im=im, fp=fp, bfile=bench_file)
+                fp = dask.delayed(write)(
+                    im=inc,
+                    fp=fp,
+                    bucket="vhs-testbucket",
+                    i=i,
+                    cache=cache,
+                    clevel=clevel,
+                    bfile=bench_file,
+                )
+            else:
+                im = read(fp=fp, anon=anon, cache=cache, bfile=bench_file)
+                inc = increment(im=im, fp=fp, bfile=bench_file)
+                fp = write(
+                    im=inc,
+                    fp=fp,
+                    bucket="vhs-testbucket",
+                    i=i,
+                    cache=cache,
+                    clevel=clevel,
+                    bfile=bench_file,
+                )
 
         outfiles.append(fp)
+
+    if use_dask is True:
+        outfiles = dask.delayed(lambda x: x)(outfiles).compute()
+
     print(", ".join(outfiles))
 
 

@@ -1,0 +1,11 @@
+{
+    "out_bucket": "vhs-testbucket",
+    "items": [
+        {
+            "in_bucket_rgx": "openneuro.org/ds000113/sub-*/ses-forrestgump/dwi/*dwi.nii.gz",
+            "iterations": [1, 5, 10],
+            "n_files": [1],
+            "cache": [true, false]
+        }
+    ]
+}
