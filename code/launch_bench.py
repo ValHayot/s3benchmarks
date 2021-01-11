@@ -14,7 +14,7 @@ def clear_bucket(bucket):
 
     bucket = op.join(bucket)
     fs = s3fs.S3FileSystem()
-    
+
     # Get list of files to delete
     files = fs.ls(bucket)
     fs.rm(files)
@@ -22,7 +22,7 @@ def clear_bucket(bucket):
 
 def launch_command(exp):
     # remove last element of list if empty
-    if exp[-1] == '':
+    if exp[-1] == "":
         exp = exp[0:-1]
     print("Launching command: ", " ".join([el for el in exp]))
     out = sp.run(args=exp, capture_output=True)
@@ -75,7 +75,7 @@ def main(condition_json, results_fldr):
             str(f),
             "--bench_file",
             gen_benchfile(bucket, i, f, c, results_fldr),
-            "--cache" if c is True else ""
+            "--cache" if c is True else "",
         ]
         for x in range(n_items)
         for bucket in in_bucket

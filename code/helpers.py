@@ -51,9 +51,9 @@ def benchmark(func):
 
 def drop_caches():
     print("** DROPPING CACHES **")
-    out = sp.run("echo 3 | sudo tee /proc/sys/vm/drop_caches", capture_output=True, shell=True)
+    out = sp.run(
+        "echo 3 | sudo tee /proc/sys/vm/drop_caches", capture_output=True, shell=True
+    )
     print("STDOUT: ", out.stdout.decode("UTF-8"), end="")
     print("STDERR: ", out.stderr.decode("UTF-8"))
     print("** DROPPING CACHES COMPLETED **")
-
-

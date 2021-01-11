@@ -93,7 +93,14 @@ def write(im, fp, bucket, i, cache=False, clevel=9, **kwargs):
 )
 @click.option("--use_dask", is_flag=True, help="run as a dask pipeline")
 def main(
-    input_bucket_rgx, output_bucket, it, cache, n_files, compression_level, bench_file, use_dask
+    input_bucket_rgx,
+    output_bucket,
+    it,
+    cache,
+    n_files,
+    compression_level,
+    bench_file,
+    use_dask,
 ):
 
     # create new benchmark file
