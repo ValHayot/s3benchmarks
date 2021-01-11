@@ -33,7 +33,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest --cov=s3benchmarks tests/
+        pytest --cov=code tests/
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
