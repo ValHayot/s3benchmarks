@@ -2,10 +2,12 @@
 import click
 import json
 import s3fs
+import shutil
 import subprocess as sp
 from os import makedirs, path as op
 from pathlib import PurePath
 from random import shuffle
+from code import helpers
 
 executable = "code/inc.py"
 
@@ -35,9 +37,10 @@ def launch_command(exp):
     print("Command completed")
 
 
-def gen_benchfile(bucket, it, files, cache):
-    bench_file = "benchmark_{0}i_{1}f_{2}_{3}.csv".format(
-        it, files, "cache" if cache is True else "nocache", PurePath(bucket).parts[1]
+def gen_benchfile(bucket, it, files, cache, use_dask):
+    bench_file = "benchmark_{0}i_{1}f_{2}_{3}_{4}.csv".format(
+        it, files, "cache" if cache is True else "nocache", PurePath(bucket).parts[1],
+        "dask" if use_dask is True else "sequential" 
     )
     return bench_file
 
@@ -79,7 +82,7 @@ def main(condition_json, results_fldr, repetitions):
             "--n_files",
             str(f),
             "--bench_file",
-            gen_benchfile(bucket, i, f, c),
+            gen_benchfile(bucket, i, f, c, d),
             "--cache" if c is True else "",
             "--use_dask" if d is True else ""
         ]
@@ -98,13 +101,19 @@ def main(condition_json, results_fldr, repetitions):
 
         # fix results folder
         rep_fldr = op.join(results_fldr, f"rep-{r}")
-        makedirs(rep_fldr, exist_ok=True)
+
+        if op.exists(rep_fldr):
+            shutil.rmtree(rep_fldr)
+        makedirs(rep_fldr)
 
         # run experiments
         for e in exp:
 
             # fix benchmark file name
             e[-3] = op.join(rep_fldr, op.basename(e[-3]))
+
+            # Clear cache before launching
+            helpers.drop_caches()
             launch_command(e)
 
             # delete s3 bucket contents post execution

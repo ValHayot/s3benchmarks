@@ -43,11 +43,17 @@ def writes3(out_fp, data, cache, **kwargs):
 
 @benchmark
 def read(fp, anon=False, cache=False, **kwargs):
-    fh = nib.FileHolder(
-        fileobj=BytesIO(
-            gzip.decompress(reads3(fp=fp, anon=anon, cache=cache, **kwargs))
-        )
-    )
+
+    data = None
+
+    # Cheat way to determine whether to decompress or not
+    if ".gz" in fp[-3:]:
+        data = gzip.decompress(reads3(fp=fp, anon=anon, cache=cache, **kwargs))
+    else:
+        data = reads3(fp=fp, anon=anon, cache=cache, **kwargs)
+
+    fh = nib.FileHolder(fileobj=BytesIO(data))
+
     im = nib.Nifti1Image.from_file_map({"header": fh, "image": fh})
     return im
 
@@ -64,7 +70,11 @@ def write(im, fp, bucket, i, cache=False, clevel=9, **kwargs):
     bio = BytesIO()
     file_map = im.make_file_map({"image": bio, "header": bio})
     im.to_file_map(file_map)
-    data = gzip.compress(bio.getvalue(), compresslevel=clevel)
+
+    if ".gz" in fp[-3:]:
+        data = gzip.compress(bio.getvalue(), compresslevel=clevel)
+    else:
+        data = bio.getvalue()
 
     if i == 0:
         out_fp = op.join(bucket, f"inc_{i}_{op.basename(fp)}")
