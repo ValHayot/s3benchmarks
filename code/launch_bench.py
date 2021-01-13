@@ -24,6 +24,8 @@ def clear_bucket(bucket):
 
 def launch_command(exp):
     # remove second to last and last element of list if empty
+    if exp[-3] == "":
+        exp = exp[0:-3] + exp[-2:]
     if exp[-2] == "":
         exp = exp[0:-2] + [exp[-1]]
     if exp[-1] == "":
@@ -57,6 +59,7 @@ def main(condition_json, results_fldr, repetitions):
     n_files = []
     cache = []
     dask = []
+    anon = []
 
     # create current execution results folder and update the results_fldr variable
     name, ext = op.splitext(op.basename(condition_json.name))
@@ -70,6 +73,7 @@ def main(condition_json, results_fldr, repetitions):
         n_files.append(items["n_files"])
         cache.append(items["cache"])
         dask.append(items["dask"])
+        anon.append(items["anon"])
 
     exp = [
         [
@@ -84,7 +88,8 @@ def main(condition_json, results_fldr, repetitions):
             "--bench_file",
             gen_benchfile(bucket, i, f, c, d),
             "--cache" if c is True else "",
-            "--use_dask" if d is True else ""
+            "--use_dask" if d is True else "",
+            "--anon" if anon[x] is True else ""
         ]
         for x in range(n_items)
         for bucket in in_bucket
@@ -110,7 +115,7 @@ def main(condition_json, results_fldr, repetitions):
         for e in exp:
 
             # fix benchmark file name
-            e[-3] = op.join(rep_fldr, op.basename(e[-3]))
+            e[-4] = op.join(rep_fldr, op.basename(e[-4]))
 
             # Clear cache before launching
             helpers.drop_caches()

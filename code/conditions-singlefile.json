@@ -6,7 +6,8 @@
             "iterations": [1, 5, 10],
             "n_files": [1],
             "cache": [true, false],
-            "dask": [true, false]
+            "dask": [true, false],
+	    "anon": true
         }
     ]
 }

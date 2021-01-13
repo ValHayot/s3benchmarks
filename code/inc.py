@@ -102,6 +102,11 @@ def write(im, fp, bucket, i, cache=False, clevel=9, **kwargs):
     type=str,
     help="file to output benchmark results to. STDOUT otherwise",
 )
+@click.option(
+   "--anon",
+   is_flag=True,
+   help="Is a publicly available s3 dataset"
+)
 @click.option("--use_dask", is_flag=True, help="run as a dask pipeline")
 def main(
     input_bucket_rgx,
@@ -112,6 +117,7 @@ def main(
     compression_level,
     bench_file,
     use_dask,
+    anon
 ):
 
     # potentially create another decorate or fix the benchmark one for this
@@ -122,8 +128,9 @@ def main(
     makespan_dir = op.dirname(bench_file)
     bench_name = op.basename(bench_file)
 
-    fs = s3fs.S3FileSystem(anon=True)
+    fs = s3fs.S3FileSystem(anon=anon)
     all_f = fs.glob(input_bucket_rgx)
+    print("all_f", all_f)
 
     files = all_f[:n_files]
     outfiles = []
@@ -131,7 +138,6 @@ def main(
 
     for fp in files:
         for i in range(it):
-            anon = True if i == 0 else False
 
             if use_dask is True:
                 im = dask.delayed(read)(fp=fp, anon=anon, cache=cache, bfile=bench_file)
@@ -157,6 +163,7 @@ def main(
                     clevel=clevel,
                     bfile=bench_file,
                 )
+        anon = False
 
         outfiles.append(fp)
 
