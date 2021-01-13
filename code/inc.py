@@ -15,6 +15,7 @@ from time import time_ns
 def reads3(fp, anon, cache, **kwargs):
 
     fs = s3fs.S3FileSystem(anon=anon)
+    fs.cachable = cache
     if not fs.exists(fp):
         fs.invalidate_cache()
 
@@ -34,6 +35,7 @@ def reads3(fp, anon, cache, **kwargs):
 @benchmark
 def writes3(out_fp, data, cache, **kwargs):
     fs = s3fs.S3FileSystem()
+    fs.cachable = cache
 
     if cache is True:
         cache_options = {"cache_storage": "/dev/shm"}
@@ -132,6 +134,7 @@ def main(
     bench_name = op.basename(bench_file)
 
     fs = s3fs.S3FileSystem(anon=anon)
+    fs.cachable = cache
     all_f = fs.glob(input_bucket_rgx)
 
     files = all_f[:n_files]
