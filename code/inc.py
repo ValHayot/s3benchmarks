@@ -15,6 +15,9 @@ from time import time_ns
 def reads3(fp, anon, cache, **kwargs):
 
     fs = s3fs.S3FileSystem(anon=anon)
+    if not fs.exists(fp):
+        fs.invalidate_cache()
+
     if cache is True:
         cache_options = {"cache_storage": "/dev/shm"}
 
@@ -130,7 +133,6 @@ def main(
 
     fs = s3fs.S3FileSystem(anon=anon)
     all_f = fs.glob(input_bucket_rgx)
-    print("all_f", all_f)
 
     files = all_f[:n_files]
     outfiles = []
@@ -145,7 +147,7 @@ def main(
                 fp = dask.delayed(write)(
                     im=inc,
                     fp=fp,
-                    bucket="vhs-testbucket",
+                    bucket=output_bucket,
                     i=i,
                     cache=cache,
                     clevel=clevel,
@@ -157,13 +159,13 @@ def main(
                 fp = write(
                     im=inc,
                     fp=fp,
-                    bucket="vhs-testbucket",
+                    bucket=output_bucket,
                     i=i,
                     cache=cache,
                     clevel=clevel,
                     bfile=bench_file,
                 )
-        anon = False
+            anon = False
 
         outfiles.append(fp)
 
