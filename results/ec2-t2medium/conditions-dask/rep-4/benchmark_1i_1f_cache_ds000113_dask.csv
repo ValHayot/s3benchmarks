@@ -1,0 +1,11 @@
+action,file,timestamp,pid,runtime
+reads3_start,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489239857748646,33775,
+reads3_end,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489240882504539,33775,1.024755893
+read_start,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489239857739371,33775,
+read_end,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489242412363786,33775,2.554624415
+increment_start,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489242413146720,33775,
+increment_end,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489242635115048,33775,0.22196832800000002
+writes3_start,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489253913994390,33775,
+writes3_end,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489255316352262,33775,1.402357872
+write_start,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489242636171213,33775,
+write_end,openneuro.org/ds000113/sub-01/ses-forrestgump/dwi/sub-01_ses-forrestgump_dwi.nii.gz,1610489255318403311,33775,12.682232098
