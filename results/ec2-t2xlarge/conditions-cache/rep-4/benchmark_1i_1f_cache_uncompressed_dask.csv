@@ -1,0 +1,11 @@
+action,file,timestamp,pid,runtime
+reads3_start,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260264878044259,73053,
+reads3_end,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260265881389035,73053,1.003344776
+read_start,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260264878036001,73053,
+read_end,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260265882370983,73053,1.004334982
+increment_start,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260265883101303,73053,
+increment_end,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260265961080241,73053,0.07797893800000001
+writes3_start,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260266021446016,73053,
+writes3_end,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260268628871159,73053,2.607425143
+write_start,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260265962220287,73053,
+write_end,vhs-testbucket/uncompressed/sub-01_ses-forrestgump_dwi.nii,1611260268629023650,73053,2.666803363

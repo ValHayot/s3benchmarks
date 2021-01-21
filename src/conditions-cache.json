@@ -1,0 +1,13 @@
+{
+    "out_bucket": "vhs-testbucket",
+    "items": [
+        {
+            "in_bucket_rgx": "vhs-testbucket/uncompressed/",
+            "iterations": [1, 5, 10],
+            "n_files": [1],
+            "cache": [true, false],
+            "dask": [true, false],
+	    "anon": false
+        }
+    ]
+}
