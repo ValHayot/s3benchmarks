@@ -6,7 +6,7 @@ import numpy as np
 import nibabel as nib
 from os import remove
 from .utils import _md5, _setup
-from ..code import measure_compression as mc
+from ..src import measure_compression as mc
 
 
 class TestCompression:
