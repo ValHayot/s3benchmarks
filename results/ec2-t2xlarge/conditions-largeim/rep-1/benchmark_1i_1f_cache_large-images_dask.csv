@@ -1,5 +1,5 @@
 action,file,timestamp,pid,runtime
-reads3_start,vhs-testbucket/large-images/i4g-b0.nii,1611544890653149881,78661,
-reads3_end,vhs-testbucket/large-images/i4g-b0.nii,1611544935510699731,78661,44.857549850000005
-read_start,vhs-testbucket/large-images/i4g-b0.nii,1611544890653140916,78661,
-read_end,vhs-testbucket/large-images/i4g-b0.nii,1611544935511787282,78661,44.858646366
+reads3_start,vhs-testbucket/large-images/i4g-b0.nii,1611594143294821428,80931,
+reads3_end,vhs-testbucket/large-images/i4g-b0.nii,1611594203261341062,80931,59.966519634
+read_start,vhs-testbucket/large-images/i4g-b0.nii,1611594143294812782,80931,
+read_end,vhs-testbucket/large-images/i4g-b0.nii,1611594203262404503,80931,59.967591721000005
