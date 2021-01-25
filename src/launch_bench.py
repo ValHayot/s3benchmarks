@@ -14,11 +14,12 @@ executable = "src/inc.py"
 
 def clear_bucket(bucket):
 
-    bucket = op.join(bucket)
+    #bucket = op.join(bucket)
     fs = s3fs.S3FileSystem()
 
     # Get list of files to delete
     files = fs.ls(bucket)
+
     fs.rm(files)
 
 

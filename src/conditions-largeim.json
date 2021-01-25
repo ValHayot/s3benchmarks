@@ -1,0 +1,13 @@
+{
+    "out_bucket": "vhs-testbucket",
+    "items": [
+        {
+            "in_bucket_rgx": "vhs-testbucket/large-images/*.nii",
+            "iterations": [1, 5],
+            "n_files": [1, 5],
+            "cache": [true, false],
+            "dask": [true],
+	    "anon": false
+        }
+    ]
+}
