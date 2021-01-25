@@ -1,11 +1,5 @@
 action,file,timestamp,pid,runtime
-reads3_start,vhs-testbucket/large-images/i4g-b0.nii,1611545662157092885,78818,
-reads3_end,vhs-testbucket/large-images/i4g-b0.nii,1611545707542934186,78818,45.385841301000006
-read_start,vhs-testbucket/large-images/i4g-b0.nii,1611545662157084568,78818,
-read_end,vhs-testbucket/large-images/i4g-b0.nii,1611545707544022589,78818,45.386938021000006
-increment_start,vhs-testbucket/large-images/i4g-b0.nii,1611545707544852936,78818,
-increment_end,vhs-testbucket/large-images/i4g-b0.nii,1611545711097097989,78818,3.552245053
-writes3_start,vhs-testbucket/large-images/i4g-b0.nii,1611545713229591206,78818,
-writes3_end,vhs-testbucket/large-images/i4g-b0.nii,1611545836436479248,78818,123.206888042
-write_start,vhs-testbucket/large-images/i4g-b0.nii,1611545711110087014,78818,
-write_end,vhs-testbucket/large-images/i4g-b0.nii,1611545836436656074,78818,125.32656906000001
+reads3_start,vhs-testbucket/large-images/i4g-b0.nii,1611594318053472162,80985,
+reads3_end,vhs-testbucket/large-images/i4g-b0.nii,1611594362800479225,80985,44.747007063000005
+read_start,vhs-testbucket/large-images/i4g-b0.nii,1611594318053463245,80985,
+read_end,vhs-testbucket/large-images/i4g-b0.nii,1611594362801604529,80985,44.748141284000006
