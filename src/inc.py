@@ -49,17 +49,23 @@ def writes3(out_fp, data, cache, **kwargs):
 @benchmark
 def read(fp, anon=False, cache=False, **kwargs):
 
-    data = None
+    if "file://" not in fp:
+        data = None
 
-    # Cheat way to determine whether to decompress or not
-    if ".gz" in fp[-3:]:
-        data = gzip.decompress(reads3(fp=fp, anon=anon, cache=cache, **kwargs))
+        # Cheat way to determine whether to decompress or not
+        if ".gz" in fp[-3:]:
+            data = gzip.decompress(reads3(fp=fp, anon=anon, cache=cache, **kwargs))
+        else:
+            data = reads3(fp=fp, anon=anon, cache=cache, **kwargs)
+
+        fh = nib.FileHolder(fileobj=BytesIO(data))
+
+        im = nib.Nifti1Image.from_file_map({"header": fh, "image": fh})
+
     else:
-        data = reads3(fp=fp, anon=anon, cache=cache, **kwargs)
-
-    fh = nib.FileHolder(fileobj=BytesIO(data))
-
-    im = nib.Nifti1Image.from_file_map({"header": fh, "image": fh})
+        im = nib.load(fp.removeprefix("file:/"), lazy=False)
+        # just to measure load time to memory
+        data = np.asanyarray(im.dataobj)
     return im
 
 
@@ -72,21 +78,25 @@ def increment(im, fp, **kwargs):
 @benchmark
 def write(im, fp, bucket, i, cache=False, clevel=9, **kwargs):
 
-    bio = BytesIO()
-    file_map = im.make_file_map({"image": bio, "header": bio})
-    im.to_file_map(file_map)
-
-    if ".gz" in fp[-3:]:
-        data = gzip.compress(bio.getvalue(), compresslevel=clevel)
-    else:
-        data = bio.getvalue()
-
     if i == 0:
         out_fp = op.join(bucket, f"inc_{i}_{op.basename(fp)}")
     else:
         out_fp = op.join(bucket, f"inc_{i}_{'_'.join(op.basename(fp).split('_')[2:])}")
 
-    writes3(out_fp, data=data, cache=cache, fp=fp, **kwargs)
+    if "file://" not in bucket:
+        bio = BytesIO()
+        file_map = im.make_file_map({"image": bio, "header": bio})
+        im.to_file_map(file_map)
+
+        if ".gz" in fp[-3:]:
+            data = gzip.compress(bio.getvalue(), compresslevel=clevel)
+        else:
+            data = bio.getvalue()
+
+        writes3(out_fp, data=data, cache=cache, fp=fp, **kwargs)
+    else:
+        nib.save(im, out_fp.removeprefix("file:/"))
+
     return out_fp
 
 

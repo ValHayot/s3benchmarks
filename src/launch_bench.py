@@ -2,6 +2,7 @@
 import click
 import json
 import s3fs
+import glob
 import shutil
 import subprocess as sp
 from os import makedirs, path as op
@@ -14,7 +15,7 @@ executable = "src/inc.py"
 
 def clear_bucket(bucket):
 
-    #bucket = op.join(bucket)
+    # bucket = op.join(bucket)
     fs = s3fs.S3FileSystem()
 
     # Get list of files to delete
@@ -42,8 +43,11 @@ def launch_command(exp):
 
 def gen_benchfile(bucket, it, files, cache, use_dask):
     bench_file = "benchmark_{0}i_{1}f_{2}_{3}_{4}.csv".format(
-        it, files, "cache" if cache is True else "nocache", PurePath(bucket).parts[1],
-        "dask" if use_dask is True else "sequential" 
+        it,
+        files,
+        "cache" if cache is True else "nocache",
+        PurePath(bucket).parts[1],
+        "dask" if use_dask is True else "sequential",
     )
     return bench_file
 
@@ -90,7 +94,7 @@ def main(condition_json, results_fldr, repetitions):
             gen_benchfile(bucket, i, f, c, d),
             "--cache" if c is True else "",
             "--use_dask" if d is True else "",
-            "--anon" if anon[x] is True else ""
+            "--anon" if anon[x] is True else "",
         ]
         for x in range(n_items)
         for bucket in in_bucket
@@ -123,7 +127,12 @@ def main(condition_json, results_fldr, repetitions):
             launch_command(e)
 
             # delete s3 bucket contents post execution
-            clear_bucket(out_bucket)
+            if "file://" not in out_bucket:
+                clear_bucket(out_bucket)
+            else:
+                for f in glob.glob(op.join(out_bucket.removeprefix("file:/"), "*.nii")):
+                    print(f"removing file {f}")
+                    os.remove(f)
 
 
 if __name__ == "__main__":

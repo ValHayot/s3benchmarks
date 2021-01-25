@@ -1,0 +1,5 @@
+action,file,timestamp,pid,runtime
+reads3_start,vhs-testbucket/large-images/i4g-b0.nii,1611587395930947323,80693,
+reads3_end,vhs-testbucket/large-images/i4g-b0.nii,1611587441137901198,80693,45.206953875
+read_start,vhs-testbucket/large-images/i4g-b0.nii,1611587395930938779,80693,
+read_end,vhs-testbucket/large-images/i4g-b0.nii,1611587441139006125,80693,45.208067346
