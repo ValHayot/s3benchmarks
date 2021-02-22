@@ -12,6 +12,7 @@ from nibabel.streamlines import S3TrkFile, TrkFile
 
 ex_path = "s3://hydi-tractography/hydi_tracks.12_58_7.trk"
 tmpfs = "/dev/shm"
+disk = "/home/ec2-user/"
 reps = 5
 pf_fn = "prefetch.log"
 
@@ -82,15 +83,17 @@ def copy_local(filename, mem_path, **kwargs):
 def cleanup(fn_prefix):
     for fn in Path(tmpfs).glob(fn_prefix + "*"):
         fn.unlink()
+    for fn in Path(disk).glob(fn_prefix + "*"):
+        fn.unlink()
 
-def read_mem(filename, lazy=True, bfile=None, rep=0):
-
-    mem_path = os.path.join(tmpfs, os.path.basename(filename))
-    copy_local(filename, mem_path, fname="copy_lc", bfile=bfile, rep=rep)
+def read_local(filename, path, lazy=True, bfile=None, rep=0, fname="read_me"):
 
     drop_caches()
-    with open(mem_path, 'rb') as f:
-        read_trk(f, lazy, fname="read_me", bfile=bfile, rep=rep)
+    local_path = os.path.join(path, os.path.basename(filename))
+    copy_local(filename, local_path, fname=fname.replace("read", f"copy"), bfile=bfile, rep=rep)
+
+    with open(local_path, 'rb') as f:
+        read_trk(f, lazy, fname=fname, bfile=bfile, rep=rep)
 
     cleanup(os.path.basename(filename))
 
@@ -104,7 +107,7 @@ def read_pf(filename, lazy=True, caches={"/dev/shm": 7*1024}, prefetch_size=32*1
 
 
     if bfile is not None:
-        os.rename(pf_fn, bfile.replace("benchmarks.out", pf_fn))
+        os.rename(pf_fn, bfile.replace("benchmarks.out", f"rep{rep}-{pf_fn}"))
 
     cleanup(os.path.basename(filename))
 
@@ -122,14 +125,16 @@ def read_s3(filename, lazy=True, bfile=None, rep=0):
 def read_all():
     bfile = os.path.join("results", f"read-all-{strftime('%Y%m%d-%H%M%S')}-benchmarks.out")
 
-    experiments = ["mem", "pf", "s3"]
+    experiments = ["mem", "disk", "pf", "s3"]
     shuffle(experiments)
 
     for i in range(5):
 
         for e in experiments:
             if e == "mem":
-                read_mem(ex_path, bfile=bfile, rep=i)
+                read_local(ex_path, path=tmpfs, bfile=bfile, rep=i, fname="read_me")
+            elif e == "disk":
+                read_local(ex_path, path=disk, bfile=bfile, rep=i, fname="read_di")
             elif e == "pf":
                 read_pf(ex_path, bfile=bfile, rep=i)
             else:
@@ -137,7 +142,7 @@ def read_all():
 
 
 if __name__=="__main__":
-    main()
+    read_all()
 
 
 
