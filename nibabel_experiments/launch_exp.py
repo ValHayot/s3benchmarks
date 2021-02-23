@@ -81,9 +81,9 @@ def copy_local(filename, mem_path, **kwargs):
 
 
 def cleanup(fn_prefix):
-    for fn in Path(tmpfs).glob(fn_prefix + "*"):
+    for fn in Path(tmpfs).glob(".*" + fn_prefix + "*"):
         fn.unlink()
-    for fn in Path(disk).glob(fn_prefix + "*"):
+    for fn in Path(disk).glob(".*" + fn_prefix + "*"):
         fn.unlink()
 
 def read_local(filename, path, lazy=True, bfile=None, rep=0, fname="read_me"):
@@ -98,26 +98,27 @@ def read_local(filename, path, lazy=True, bfile=None, rep=0, fname="read_me"):
     cleanup(os.path.basename(filename))
 
 
-def read_pf(filename, lazy=True, caches={"/dev/shm": 7*1024}, prefetch_size=32*1024**2, bfile=None, rep=0):
+def read_pf(filename, lazy=True, caches={"/dev/shm": 7*1024}, prefetch_size=32*1024**2, bfile=None, rep=0, fname="read-pf"):
     drop_caches()
 
     fs = s3fs.S3FileSystem()
     with fs.open(filename, 'rb') as f:
-        read_trk(f, lazy, prefetch_size=prefetch_size, caches=caches, fetch=True, fname="read_pf", bfile=bfile, rep=rep)
+        read_trk(f, lazy, prefetch_size=prefetch_size, caches=caches, fetch=True, fname=fname, bfile=bfile, rep=rep)
 
 
     if bfile is not None:
-        os.rename(pf_fn, bfile.replace("benchmarks.out", f"rep{rep}-{pf_fn}"))
+        mb=fname.split("_")[-1]
+        os.rename(pf_fn, bfile.replace("benchmarks.out", f"rep{rep}-{pf_fn}-{mb}"))
 
     cleanup(os.path.basename(filename))
 
 
-def read_s3(filename, lazy=True, bfile=None, rep=0):
+def read_s3(filename, lazy=True, bfile=None, rep=0, fname="read_s3", **s3_kwargs):
     drop_caches()
 
     fs = s3fs.S3FileSystem()
-    with fs.open(filename, 'rb') as f:
-        read_trk(f, lazy, fname="read_s3", bfile=bfile, rep=rep)
+    with fs.open(filename, 'rb', **s3_kwargs) as f:
+        read_trk(f, lazy, fname=fname, bfile=bfile, rep=rep)
 
     cleanup(os.path.basename(filename))
 
@@ -128,7 +129,7 @@ def read_all():
     experiments = ["mem", "disk", "pf", "s3"]
     shuffle(experiments)
 
-    for i in range(5):
+    for i in range(reps):
 
         for e in experiments:
             if e == "mem":
@@ -140,9 +141,34 @@ def read_all():
             else:
                 read_s3(ex_path, bfile=bfile, rep=i)
 
+def block_size():
+    bfile = os.path.join("results", f"block_size-{strftime('%Y%m%d-%H%M%S')}-benchmarks.out")
+    experiments = [(2**i)*1024**2 for i in range(1, 11)]
+    shuffle(experiments)
+
+    for i in range(reps):
+        for e in experiments:
+            mb = int(e/1024**2)
+            print(f"Running experiment read_pf_{mb}")
+            read_pf(ex_path, prefetch_size=e, bfile=bfile, rep=i, fname=f"read_pf_{mb}")
+            print(f"Experiment read_pf_{mb} completed")
+
+def s3block_size():
+    bfile = os.path.join("results", f"s3block_size-{strftime('%Y%m%d-%H%M%S')}-benchmarks.out")
+    experiments = [(2**i)*1024**2 for i in range(1, 11)]
+    shuffle(experiments)
+
+    for i in range(reps):
+        for e in experiments:
+            mb = int(e/1024**2)
+            print(f"Running experiment read_s3_{mb}")
+            read_s3(ex_path, bfile=bfile, rep=i, fname=f"read_s3_{mb}", block_size=e)
+            print(f"Experiment read_s3_{mb} completed")
 
 if __name__=="__main__":
-    read_all()
+    #read_all()
+    #block_size()
+    s3block_size()
 
 
 
